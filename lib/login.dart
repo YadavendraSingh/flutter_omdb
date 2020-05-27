@@ -150,7 +150,7 @@ class _LoginState extends State<Login> {
     String user = _userNameController.text;
     String password = _passwordController.text;
     if (user.length == 0 || password.length == 0) {
-      showSnackBar('Please fill User Name and Password');
+      showSnackBar('Please fill User Name and Password', false);
     } else {
       _onLoading();
       fetchMovie(user, password);
@@ -176,16 +176,18 @@ class _LoginState extends State<Login> {
           MaterialPageRoute(builder: (context) => SearchMovie()),
         );
       } else {
-        showSnackBar('Inavlid User Name or Password');
+        showSnackBar('Inavlid User Name or Password', true);
       }
     } else {
       // If the server did not return a 200 OK response,
-      showSnackBar('Inavlid User Name or Password');
+      showSnackBar('Inavlid User Name or Password', true);
     }
   }
 
-  showSnackBar(String msg) {
+  showSnackBar(String msg, bool isCancel) {
+    if(isCancel)
     Navigator.of(context, rootNavigator: true).pop();
+
     _scaffoldKey.currentState.showSnackBar(SnackBar(
       content: Text(msg),
       duration: Duration(seconds: 3),
