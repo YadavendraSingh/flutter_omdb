@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'movie.dart';
 import 'dart:convert';
-import 'package:oktoast/oktoast.dart';
+import 'search_movie.dart';
 
 class Login extends StatefulWidget {
   @override
@@ -15,10 +15,12 @@ class _LoginState extends State<Login> {
   TextEditingController _userNameController = new TextEditingController();
   TextEditingController _passwordController = new TextEditingController();
   Future<Movie> movie;
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      key: _scaffoldKey,
       body: Container(
           decoration: BoxDecoration(
               image: DecorationImage(
@@ -79,6 +81,7 @@ class _LoginState extends State<Login> {
                           maxLength: 4,
                           controller: _passwordController,
                           obscureText: true,
+                          keyboardType: TextInputType.number,
                           style: TextStyle(fontSize: 20, color: Colors.white),
                           decoration: InputDecoration(
                               hintStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 20, color: Colors.white),
@@ -117,14 +120,14 @@ class _LoginState extends State<Login> {
                                 style: TextStyle(
                                   fontSize: 40,
                                   fontWeight: FontWeight.bold,
-                                  color: isClicked?Theme.of(context).primaryColor:Colors.green,
+                                  color: Theme.of(context).primaryColor,
                                 ),
                               ),
                               onPressed: (){
                                 setState(() {
                                   isClicked = !isClicked;
                                 });
-                                showToast("OnTap", position: ToastPosition.bottom);
+                                //showToast("OnTap", position: ToastPosition.bottom);
                                 loginUser();
                               },
                             ),
@@ -138,27 +141,34 @@ class _LoginState extends State<Login> {
     );
   }
 
-  void loginUser(){
+  void loginUser() async{
     String user = _userNameController.text;
     String password = _passwordController.text;
     if(user.length==0 || password.length==0){
      showSnackBar('Please fill User Name and Password');
     }
     else{
-      movie = fetchMovie(user, password);
-      var temp = 1;
+     fetchMovie(user, password);
     }
   }
 
-  Future<Movie> fetchMovie(String movie, String year) async {
+   fetchMovie(String movie, String year) async {
 
-    final response = await http.get('http://www.omdbapi.com/?i=tt3896198&apikey=848e1f7a');
+    movie = movie.trim().replaceAll(" ", "+");
+    final response = await http.get('http://www.omdbapi.com/?t='+movie+'&y='+year+'&apikey=848e1f7a');
 
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
-      final json = jsonDecode(response.body);
-      return Movie.fromJson(json.decode(response.body));
+      //final json = jsonDecode(response.body);
+     Movie movie = Movie.fromJson(json.decode(response.body));
+     if(movie!=null && movie.title!=null){
+       Navigator.pushReplacement(
+         context,MaterialPageRoute(builder: (context) => SearchMovie()),);
+     }
+     else{
+       showSnackBar('Inavlid User Name or Password');
+     }
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
@@ -167,8 +177,8 @@ class _LoginState extends State<Login> {
   }
 
   showSnackBar(String msg){
-    showToast(msg, position: ToastPosition.bottom);
-    Scaffold.of(context).showSnackBar(SnackBar(
+    //showToast(msg, position: ToastPosition.bottom);
+    _scaffoldKey.currentState.showSnackBar(SnackBar(
       content: Text(msg),
       duration: Duration(seconds: 3),
     ));
